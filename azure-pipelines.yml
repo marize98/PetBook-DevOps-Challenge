@@ -1,0 +1,94 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: sonarqube_url
+    value: 'http://$(SONAR_HOST):9000'
+  - name: aws_region
+    value: 'us-east-1'
+
+stages:
+  - stage: CI
+    displayName: 'Continuous Integration'
+    jobs:
+      - job: BuildAndTest
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '18.x'
+            displayName: 'Install Node.js'
+
+          - script: |
+              cd petbook-app
+              npm install
+            displayName: 'Install Dependencies'
+
+          - script: |
+              cd petbook-app
+              npm run lint
+            displayName: 'Linting'
+
+          - script: |
+              cd petbook-app
+              npx vitest run --coverage
+            displayName: 'Run Unit Tests & Coverage'
+
+          # SonarQube Analysis
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: 'SonarServiceConnection'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: 'PetBook_Web'
+              cliProjectName: 'PetBook Web'
+              extraProperties: |
+                sonar.sources=petbook-app/src
+                sonar.tests=petbook-app/src
+                sonar.test.inclusions=**/*.test.tsx
+                sonar.javascript.lcov.reportPaths=petbook-app/coverage/lcov.info
+            displayName: 'Prepare SonarQube Analysis'
+
+          - task: SonarQubeAnalyze@5
+            displayName: 'Run SonarQube Analysis'
+
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: '300'
+            displayName: 'Publish Quality Gate Result'
+
+  - stage: Deploy
+    displayName: 'Continuous Deployment'
+    dependsOn: CI
+    condition: succeeded('CI')
+    jobs:
+      - job: DeployToAWS
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '18.x'
+
+          - script: |
+              cd petbook-app
+              npm install
+              npm run build
+            displayName: 'Build Production Assets'
+
+          - task: S3Upload@1
+            inputs:
+              awsCredentials: 'AWSServiceConnection'
+              regionName: '$(aws_region)'
+              bucketName: 'petbook-pdn'
+              sourceFolder: 'petbook-app/dist'
+              globExpressions: '**'
+            displayName: 'Upload to S3'
+
+          - task: CloudFrontInvalidation@1
+            inputs:
+              awsCredentials: 'AWSServiceConnection'
+              regionName: '$(aws_region)'
+              distributionId: '$(CF_DIST_ID)'
+              items: '/*'
+            displayName: 'Invalidate CloudFront Cache'
