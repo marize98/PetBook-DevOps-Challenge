@@ -6,18 +6,36 @@ interface PetCardProps {
   index: number;
 }
 
+/**
+ * PetCard Component
+ * Muestra una publicación individual con efectos de hover premium y animaciones escalonadas.
+ * Implementa el patrón de diseño de 'Cards' con elevación dinámica.
+ */
 const PetCard: React.FC<PetCardProps> = ({ post, index }) => {
   return (
-    <div 
+    <article 
       className="post-card fade-in" 
-      style={{ animationDelay: `${index * 0.1}s` }}
+      style={{ animationDelay: `${index * 0.15}s` }}
+      aria-labelledby={`post-title-${post.id}`}
     >
-      <img src={post.imageUrl} alt={post.title} className="post-img" />
-      <div className="post-content">
-        <h3 className="post-title">{post.title}</h3>
-        <div className="post-author">{post.author}</div>
+      <div className="post-img-container">
+        <img 
+          src={post.imageUrl} 
+          alt={post.title} 
+          className="post-img" 
+          loading="lazy"
+        />
       </div>
-    </div>
+      <div className="post-content">
+        <h3 id={`post-title-${post.id}`} className="post-title">
+          {post.title}
+        </h3>
+        <div className="post-author-chip">
+          <span aria-hidden="true">🐾</span>
+          <span>{post.author}</span>
+        </div>
+      </div>
+    </article>
   );
 };
 
