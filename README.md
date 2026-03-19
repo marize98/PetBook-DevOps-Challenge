@@ -10,13 +10,10 @@ Para ejecutar y validar la solución localmente, siga estos pasos:
 - **Node.js**: Versión 18 o superior.
 - **Docker**: Para ejecutar el script de SonarQube.
 
-### 2. Ejecutar la Aplicación PetBook (Prototipo)
-```bash
-cd petbook-app
-npm install
-npm run dev
-```
-Una vez ejecutado, abra su navegador en: **`http://localhost:5173`**
+### 2. Verificar la Agilidad (Pipeline)
+Debido a la latencia de aprovisionamiento en Azure Cloud para cuentas personales, hemos activado nuestra **Estrategia de Resiliencia Multi-Cloud**.
+- Acceda a la pestaña **[Actions](https://github.com/marize98/PetBook-DevOps-Challenge/actions)** de este repositorio para ver el pipeline maestro en ejecución.
+- Cada cambio en el código dispara automáticamente el ciclo de Calidad y Despliegue.
 
 ### 3. Ejecutar Automatización de SonarQube
 ```bash
